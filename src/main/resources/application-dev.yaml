@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pokemons
+    username: dev
+    password: cow
+  jpa:
+    hibernate:
+      ddl-auto: 'create-drop'
