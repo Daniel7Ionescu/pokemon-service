@@ -1,10 +1,10 @@
 package com.dan.pokemonservice.services;
 
-import com.dan.pokemonservice.models.dtos.PokemonDTO;
+import com.dan.pokemonservice.models.dtos.PokemonCarrier;
 
 import java.util.List;
 
 public interface PokemonService {
 
-    List<PokemonDTO> getRandomPokemons(int amount);
+    PokemonCarrier getRandomPokemons(int amount);
 }
