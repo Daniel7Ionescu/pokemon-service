@@ -1,6 +1,6 @@
 package com.dan.pokemonservice.controllers;
 
-import com.dan.pokemonservice.models.dtos.PokemonDTO;
+import com.dan.pokemonservice.models.dtos.PokemonCarrier;
 import com.dan.pokemonservice.services.PokemonService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +21,7 @@ public class PokemonController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PokemonDTO>> getRandomPokemons(@RequestParam(defaultValue = "3") Integer amount) {
+    public ResponseEntity<PokemonCarrier> getRandomPokemons(@RequestParam(defaultValue = "3") Integer amount) {
         return ResponseEntity.ok(pokemonService.getRandomPokemons(amount));
     }
 }
