@@ -1,13 +1,12 @@
 package com.dan.pokemonservice.services;
 
-import com.dan.pokemonservice.models.dtos.PokemonCarrier;
-import com.dan.pokemonservice.models.dtos.PokemonDTO;
+import com.dan.pokemonservice.models.dtos.pokemon.PokemonCarrier;
+import com.dan.pokemonservice.models.dtos.pokemon.PokemonDTO;
 import com.dan.pokemonservice.models.entities.Pokemon;
 import com.dan.pokemonservice.models.response.PokemonResponse;
 import com.dan.pokemonservice.repositories.PokemonRepository;
 import com.dan.pokemonservice.utils.PokemonMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.retry.annotation.Backoff;
@@ -17,10 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
+import static com.dan.pokemonservice.utils.BusinessInfo.*;
 
 @Slf4j
 @Service
@@ -29,79 +28,60 @@ public class PokemonServiceImpl implements PokemonService {
     private final RestTemplate restTemplate;
     private final Random random;
     private final PokemonRepository pokemonRepository;
+    private final PokemonMapper pokemonMapper;
 
-    public PokemonServiceImpl(RestTemplate restTemplate, Random random, PokemonRepository pokemonRepository) {
+    public PokemonServiceImpl(RestTemplate restTemplate, Random random, PokemonRepository pokemonRepository, PokemonMapper pokemonMapper) {
         this.restTemplate = restTemplate;
         this.random = random;
         this.pokemonRepository = pokemonRepository;
+        this.pokemonMapper = pokemonMapper;
     }
 
     /**
-     * Fetches a list of random pokemons, saves unique pokemons in the db
-     * @param amount the number of pokemons
-     * @return PokemonCarrier, holds a message and a list of PokemonDTO
+     * Fetches a random pokemon, if it doesn't exist in the db, it will save it
+     *
+     * @return PokemonCarrier, holds a message and a PokemonDTO
      */
-
-    @Retryable(retryFor = RestClientException.class, maxAttempts = 2, backoff = @Backoff(delay = 200))
     @Override
-    public PokemonCarrier getRandomPokemons(int amount) {
-        int[] pokemonIds = generateRandomPokemonIds(amount);
-        List<PokemonDTO> pokemonList = new ArrayList<>();
+    @Retryable(retryFor = RestClientException.class, maxAttempts = 2, backoff = @Backoff(delay = 200))
+    public PokemonCarrier getRandomPokemon() {
+        int generatedId = random.nextInt(MIN_POKEMON_ID, MAX_POKEMON_ID);
+        PokemonResponse response = restTemplate.getForObject(POKEMON_URL + generatedId, PokemonResponse.class);
+        PokemonDTO dto = pokemonMapper.responseToDto(response);
 
-        Arrays.stream(pokemonIds)
-                .forEach(id -> {
-                    PokemonResponse response = restTemplate.getForObject("https://pokeapi.co/api/v2/pokemon/" + id, PokemonResponse.class);
-                    pokemonList.add(PokemonMapper.responseToDto(response));
-                });
+        if (pokemonRepository.findByName(dto.getName()).isEmpty()) {
+            pokemonRepository.save(pokemonMapper.dtoToEntity(dto));
+            log.info("Unique {} pokemon saved in db", dto.getName());
+        }
 
-        List<Pokemon> pokemonEntities = pokemonList.stream()
-                .map(PokemonMapper::dtoToEntity)
-                .filter(pokemon -> pokemonRepository.findByName(pokemon.getName()).isEmpty())
-                .toList();
-        pokemonRepository.saveAll(pokemonEntities);
-
-        return new PokemonCarrier(String.format("Returned %d pokemons at random", amount), pokemonList);
+        return new PokemonCarrier("Returned a random pokemon", dto);
     }
 
     /**
-     * In case the pokemon fetching fails, attempts to retrieve a number of pokemons from the database
-     * @param amount the requested amount of pokemons
-     * @return PokemonCarrier with a message and a list of pokemons if any are available in database
+     * In case the pokemon fetching fails, attempts to retrieve a random pokemon from the database
+     *
+     * @return PokemonCarrier with a message and a random pokemon if any is available from the database
      */
     @Recover
-    public PokemonCarrier recover(int amount){
+    public PokemonCarrier recover(RestClientException e) {
+        log.info(e.getMessage());
         PokemonCarrier carrier = new PokemonCarrier();
-        Pageable limit = PageRequest.of(0,amount);
-        List<Pokemon> retrievedPokemons = pokemonRepository.findAll(limit).getContent();
+        long repositorySize = pokemonRepository.count();
 
-        if(retrievedPokemons.isEmpty()){
+        if (repositorySize > 0) {
+            Pageable limit = PageRequest.of(PAGE_NUMBER, PAGE_SIZE);
+            List<Pokemon> pokemonList = pokemonRepository.findAll(limit).getContent();
+            int randomIndex = random.nextInt(0, pokemonList.size());
+            PokemonDTO pokemonDTO = pokemonMapper.entityToDto(pokemonList.get(randomIndex));
+
+            carrier.setMessage("Random pokemon retrieved from database");
+            carrier.setPokemonDTO(pokemonDTO);
+            log.info("Pokemon retrieved from database");
+        } else {
             carrier.setMessage("No pokemons in database");
-            log.info("NO pokemons in database");
-        }
-        else {
-            carrier.setMessage("Pokemons retrieved from database");
-            carrier.setPokemons(retrievedPokemons.stream()
-                            .map(PokemonMapper::entityToDto)
-                            .toList());
-            log.info("Pokemons retrieved from database");
+            log.info("No pokemons in database");
         }
 
         return carrier;
-    }
-
-    /**
-     * Genererates an array of random pokemon ids from 1 up to 50
-     * @param amount determines how many ints will be generated
-     * @return an array of random ints
-     */
-    private int[] generateRandomPokemonIds(int amount) {
-        int[] generatedIds = new int[amount];
-        while (amount > 0) {
-            amount--;
-            int randomId = random.nextInt(1, 50);
-            generatedIds[amount] = randomId;
-        }
-
-        return generatedIds;
     }
 }
