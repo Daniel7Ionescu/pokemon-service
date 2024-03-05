@@ -1,5 +1,6 @@
 package com.dan.pokemonservice.config;
 
+import com.dan.pokemonservice.utils.PokemonMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -17,5 +18,10 @@ public class AppConfig {
     @Bean
     public Random random() {
         return new Random();
+    }
+
+    @Bean
+    public PokemonMapper pokemonMapper() {
+        return new PokemonMapper();
     }
 }

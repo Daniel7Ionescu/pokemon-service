@@ -1,4 +1,4 @@
-package com.dan.pokemonservice.models.dtos;
+package com.dan.pokemonservice.models.dtos.pokemon;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,5 +12,5 @@ import java.util.List;
 public class PokemonCarrier {
 
     private String message;
-    private List<PokemonDTO> pokemons;
+    private PokemonDTO pokemonDTO;
 }
