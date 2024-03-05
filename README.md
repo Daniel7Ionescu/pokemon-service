@@ -11,6 +11,7 @@ The service uses RestTemplate to make HTTP requests and has a retry feature, tha
 
 ### Usage and Info
 http://localhost:8080/api/pokemons
+
 The service is designed to return a basic carrier object, with a message and a pokemon. 
 Various other properties can be added to the carrier object.
 
