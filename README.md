@@ -6,7 +6,7 @@ The service uses RestTemplate to make HTTP requests and has a retry feature, tha
 
 ### How to run
 1. mvn install
-2. docker build -t pokemon
+2. docker build -t pokemon .
 3. use the docker-compose file to run it together with postgres or setup as you see fit
 
 ### Usage and Info
