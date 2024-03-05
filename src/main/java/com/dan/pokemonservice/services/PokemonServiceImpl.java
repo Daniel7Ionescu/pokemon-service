@@ -26,15 +26,15 @@ import static com.dan.pokemonservice.utils.BusinessInfo.*;
 public class PokemonServiceImpl implements PokemonService {
 
     private final RestTemplate restTemplate;
-    private final Random random;
     private final PokemonRepository pokemonRepository;
     private final PokemonMapper pokemonMapper;
+    private final Random random;
 
-    public PokemonServiceImpl(RestTemplate restTemplate, Random random, PokemonRepository pokemonRepository, PokemonMapper pokemonMapper) {
+    public PokemonServiceImpl(RestTemplate restTemplate, PokemonRepository pokemonRepository, PokemonMapper pokemonMapper, Random random) {
         this.restTemplate = restTemplate;
-        this.random = random;
         this.pokemonRepository = pokemonRepository;
         this.pokemonMapper = pokemonMapper;
+        this.random = random;
     }
 
     /**

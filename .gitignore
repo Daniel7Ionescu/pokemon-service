@@ -22,6 +22,7 @@ target/
 pokemon-service.iml
 mvnw.cmd
 mvnw
+/src/main/resources/application-dev.yaml
 
 ### NetBeans ###
 /nbproject/private/

@@ -1,0 +1,25 @@
+services:
+  pokemon-app:
+    image: pokemon:latest
+    build:
+      context: .
+    container_name: pokemon-container
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/pokemons
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+    ports:
+      - 8080:8080
+
+  db:
+    container_name: db-container
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=pokemons
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_USER=admin
+    ports:
+      - 8000:5432
